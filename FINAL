@@ -1,0 +1,348 @@
+import java.util.*;
+
+class Graph {
+    private int vertices; // Number of vertices
+    private LinkedList<Integer>[] adjList; // Adjacency list
+
+    // Constructor for Graph class
+    public Graph(int vertices) {
+        this.vertices = vertices;
+        adjList = new LinkedList[vertices];
+        for (int i = 0; i < vertices; ++i) {
+            adjList[i] = new LinkedList<>();
+        }
+    }
+
+    // Method to add an edge to the graph
+    public void addEdge(int src, int dest) {
+        adjList[src].add(dest);
+        adjList[dest].add(src);
+    }
+
+    // Getter for adjacency list
+    public LinkedList<Integer>[] getAdjList() {
+        return adjList;
+    }
+
+    // DFS utility method for connectivity check
+    private void DFSUtil(int v, boolean[] visited) {
+        visited[v] = true;
+        for (int n : adjList[v]) {
+            if (!visited[n]) {
+                DFSUtil(n, visited);
+            }
+        }
+    }
+
+    // Method to check if the graph is connected
+    public boolean isConnected() {
+        boolean[] visited = new boolean[vertices];
+        DFSUtil(0, visited);
+        for (boolean visit : visited) {
+            if (!visit) {
+                return false;
+            }
+        }
+        return true;
+    }
+//d1
+    // Method to count connected components
+    public int countConnectedComponents() {
+        boolean[] visited = new boolean[vertices];
+        int count = 0;
+        for (int v = 0; v < vertices; ++v) {
+            if (!visited[v]) {
+                DFSUtil(v, visited);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // DFS utility method for cycle detection
+    private boolean isCyclicUtil(int v, boolean[] visited, int parent) {
+        visited[v] = true;
+        for (int n : adjList[v]) {
+            if (!visited[n]) {
+                if (isCyclicUtil(n, visited, v)) {
+                    return true;
+                }
+            } else if (n != parent) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Method to check if the graph has a cycle
+    public boolean isCyclic() {
+        boolean[] visited = new boolean[vertices];
+        for (int v = 0; v < vertices; v++) {
+            if (!visited[v]) {
+                if (isCyclicUtil(v, visited, -1)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Method to check if the graph is bipartite
+    public boolean isBipartite() {
+        int[] color = new int[vertices];
+        Arrays.fill(color, -1);
+        for (int i = 0; i < vertices; i++) {
+            if (color[i] == -1) {
+                if (!isBipartiteUtil(i, color)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+//d2
+    // BFS utility method for bipartite check
+    private boolean isBipartiteUtil(int src, int[] color) {
+        color[src] = 1;
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(src);
+        while (!queue.isEmpty()) {
+            int u = queue.poll();
+            for (int v : adjList[u]) {
+                if (color[v] == -1) {
+                    color[v] = 1 - color[u];
+                    queue.add(v);
+                } else if (color[v] == color[u]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+}
+
+public class GraphTheoryApp {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("Choose an option:");
+            System.out.println("1. Input list of edges of a simple graph");
+            System.out.println("2. Input adjacency matrix");
+            System.out.println("3. Input a pair of vertices associated to the edges of an undirected graph" + "<< This will present you with an ADJACENCY Martix, as well as find the degree of a chosen vertex");
+            System.out.println("4. Input a pair of vertices and the number of times each edge appears" + "<< This will present you with an INCIDENCE Matrix");
+            System.out.println("5. Check if two graphs are isomorphic");
+            System.out.println("6. Quit");
+
+            int choice = scanner.nextInt();
+            switch (choice) {
+                case 1:
+                    handleOption1(scanner);
+                    break;
+                case 2:
+                    handleOption2(scanner);
+                    break;
+                case 3:
+                    handleOption3(scanner);
+                    break;
+                case 4:
+                    handleOption4(scanner);
+                    break;
+                case 5:
+                    handleOption5(scanner);
+                    break;
+                case 6:
+                    System.out.println("Exiting...");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+//d44
+
+    // Handle option 1: List of edges
+    private static void handleOption1(Scanner scanner) {
+        System.out.println("Enter number of vertices:");
+        int vertices = scanner.nextInt();
+        Graph graph = new Graph(vertices);
+
+        System.out.println("Enter number of edges:");
+        int edges = scanner.nextInt();
+
+        System.out.println("Enter the edges (format: src dest):");
+        for (int i = 0; i < edges; i++) {
+            int src = scanner.nextInt();
+            int dest = scanner.nextInt();
+            graph.addEdge(src, dest);
+        }
+
+        if (graph.isConnected()) {
+            System.out.println("The graph is connected.");
+        } else {
+            System.out.println("The graph is not connected. Number of connected components: " + graph.countConnectedComponents());
+        }
+
+        if (graph.isCyclic()) {
+            System.out.println("The graph has a cycle.");
+        } else {
+            System.out.println("The graph does not have a cycle.");
+        }
+
+        if (graph.isBipartite()) {
+            System.out.println("The graph is bipartite.");
+        } else {
+            System.out.println("The graph is not bipartite.");
+        }
+    }
+
+    // Handle option 2: Adjacency matrix
+    private static void handleOption2(Scanner scanner) {
+        System.out.println("Enter number of vertices:");
+        int vertices = scanner.nextInt();
+        int[][] adjMatrix = new int[vertices][vertices];
+
+        System.out.println("Enter the adjacency matrix:");
+        for (int i = 0; i < vertices; i++) {
+            for (int j = 0; j < vertices; j++) {
+                adjMatrix[i][j] = scanner.nextInt();
+            }
+        }
+
+        // List the edges and count occurrences
+        Map<String, Integer> edgeCount = new HashMap<>();
+        for (int i = 0; i < vertices; i++) {
+            for (int j = i; j < vertices; j++) {
+                if (adjMatrix[i][j] > 0) {
+                    String edge = i + "-" + j;
+                    edgeCount.put(edge, adjMatrix[i][j]);
+                }
+            }
+        }
+
+        System.out.println("Edges and their counts:");
+        for (Map.Entry<String, Integer> entry : edgeCount.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+
+    }
+
+    // Handle option 3: Degree of vertex and adjacency matrix construction
+    private static void handleOption3(Scanner scanner) {
+        System.out.println("Enter number of vertices:");
+        int vertices = scanner.nextInt();
+        Graph graph = new Graph(vertices);
+
+        System.out.println("Enter number of edges:");
+        int edges = scanner.nextInt();
+
+        System.out.println("Enter the edges (format: src dest):");
+        for (int i = 0; i < edges; i++) {
+            int src = scanner.nextInt();
+            int dest = scanner.nextInt();
+            graph.addEdge(src, dest);
+        }
+
+        System.out.println("Enter the vertex to find its degree:");
+        int vertex = scanner.nextInt();
+        int degree = graph.getAdjList()[vertex].size();
+        System.out.println("The degree of vertex " + vertex + " is: " + degree);
+
+        // Construct adjacency matrix
+        int[][] adjMatrix = new int[vertices][vertices];
+        for (int i = 0; i < vertices; i++) {
+            for (int j : graph.getAdjList()[i]) {
+                adjMatrix[i][j]++;
+            }
+        }
+
+        System.out.println("Adjacency Matrix:");
+        for (int i = 0; i < vertices; i++) {
+            for (int j = 0; j < vertices; j++) {
+                System.out.print(adjMatrix[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    // Handle option 4: Incidence matrix construction
+    private static void handleOption4(Scanner scanner) {
+        System.out.println("Enter number of vertices:");
+        int vertices = scanner.nextInt();
+
+        System.out.println("Enter number of edges:");
+        int edges = scanner.nextInt();
+
+        int[][] incidenceMatrix = new int[vertices][edges];
+
+        System.out.println("Enter the edges (format: src dest):");
+        for (int i = 0; i < edges; i++) {
+            int src = scanner.nextInt();
+            int dest = scanner.nextInt();
+            incidenceMatrix[src][i] = 1;
+            incidenceMatrix[dest][i] = 1;
+
+        }
+
+        System.out.println("Incidence Matrix:");
+        for (int i = 0; i < vertices; i++) {
+            for (int j = 0; j < edges; j++) {
+                System.out.print(incidenceMatrix[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    // Handle option 5: Check graph isomorphism
+    private static void handleOption5(Scanner scanner) {
+        System.out.println("Enter number of vertices in first graph:");
+        int vertices1 = scanner.nextInt();
+        Graph graph1 = new Graph(vertices1);
+
+        System.out.println("Enter the number of edges for the first graph:");
+        int edges1 = scanner.nextInt();
+        
+        System.out.println("Enter the edges for the first graph (format: src dest)");
+        for (int i = 0; i < edges1; i++) {
+            int src = scanner.nextInt();
+            int dest = scanner.nextInt();
+            graph1.addEdge(src, dest);
+            
+        }
+
+        System.out.println("Enter number of vertices in second graph:");
+        int vertices2 = scanner.nextInt();
+        Graph graph2 = new Graph(vertices2);
+
+        System.out.println("Enter the number of edges for the second graph");
+        int edges2 = scanner.nextInt();
+
+        System.out.println("Enter the edges of the second graph (format: src dest)");
+        for (int i = 0; i < edges2; i++) {
+            int src = scanner.nextInt();
+            int dest = scanner.nextInt();         
+            graph2.addEdge(src, dest);   
+        }
+
+        if (areIsomorphic(graph1, graph2)) {
+            System.out.println("The graphs are isomorphic.");
+        } else {
+            System.out.println("The graphs are not isomorphic.");
+        }
+    }
+
+    // Method to check if two graphs are isomorphic
+private static boolean areIsomorphic(Graph graph1, Graph graph2) {
+    if (graph1 == null || graph2 == null) {
+        return false;
+    }
+
+    if (graph1 != graph2) {
+        return false;
+    }
+
+    return graph1.countConnectedComponents() == graph2.countConnectedComponents();
+}
+}
+//FINAL
